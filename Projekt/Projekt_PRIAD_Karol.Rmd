@@ -1,0 +1,388 @@
+---
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .Rmd
+      format_name: rmarkdown
+      format_version: '1.1'
+      jupytext_version: 1.1.3
+  kernelspec:
+    display_name: Python 3
+    language: python
+    name: python3
+---
+
+# Rozpoznawanie ocen końcowych
+
+
+Wykonali:
+- Jan Chabik
+- Karol Wójciński
+
+
+## 1. Opis problemu
+
+
+Dane, które wykorzystujemy zostały zebrane za pomocą przeprowadzonych ankiet rozwiązanych przez uczniów matematyki i języka portugalskiego w szkole średniej. Dane zawierają wiele interesujących socjalnych, płciowych i naukowych informacji na temat uczniów. Naszym zadaniem jest, wykorzystując wiedzę zdobytą na laboratoriach, by za pomocą tych danych przewidzieć końcową ocenę studentów. Korzystać będziemy z danych uzyskanych dzięki uczniom matematyki.
+
+
+#### Opis danych
+
+
+Atrybuty dla zbioru danych student-mat.csv:
+1.	school - szkoła ucznia (binarnie: 'GP' - Gabriel Pereira lub 'MS' - Mousinho da Silveira)
+2.	sex - płeć ucznia (binarnie: 'F' - żeńska or 'M' - męska) 
+3.	age - wiek studenta (numerycznie: od 15 do 22) 
+4.	address - typ zamieszkania ucznia (binarnie: 'U' - miasto or 'R' - wieś) 
+5.	famsize - wielkość rodziny (binarnie: 'LE3' - less or equal to 3 or 'GT3' - greater than 3) 
+6.	Pstatus - stan współżycia rodziców (binarnie: 'T' - mieszkają razem or 'A' - oddzielnie)
+7.	Medu - edukacja matki (numerycznie: 0 - brak, 1 - podstawowa (4 klasa), 2 – 5 do 9 klasa, 3 – średnia or 4 – wyższa)
+8.	Fedu - edukacja ojca (numerycznie: 0 - brak, 1 - podstawowa (4 klasa), 2 – 5 do 9 klasa, 3 – średnia or 4 – wyższa)
+9.	Mjob - praca matki (symbolicznie: 'teacher' - nauczycielka, 'health' - dbanie o zdrowie, 'services' - cywilna służba (np. policja, sprawy administracyjne), 'at_home' - w domu lub 'other' - inne) 
+10.	Fjob - praca ojca (symbolicznie: 'teacher' - nauczyciel, 'health' - dbanie o zdrowie, 'services' - cywilna służba (np. policja, sprawy administracyjne), 'at_home' - w domu lub 'other' - inne) 
+11.	reason - dlaczego uczeń wybrał tę szkołę (symbolicznie: 'home' - blisko do domu, 'reputation' - reputacja szkoły, 'course' - preferencje lub 'other' - inne) 
+12.	guardian - opiekun ucznia (symbolicznie: 'mother'- matka, 'father' - ojciec or 'other' - ktoś inny) 
+13.	traveltime - czas podróży do szkoły (numerycznie: 1 - < 15 min., 2 - 15 do 30 min., 3 - 30 min. do 1 hour lubr 4 - >1 godzina) 
+14.	studytime - tygodniowy czas poświęcony na naukę (numerycznie: 1 - <2 godziny, 2 - 2 do 5 godzin, 3 - 5 do 10 godzin, or 4 - >10 godzin) 
+15.	failures - liczba poprzednich niezaliczonych klas (numerycznie: n, jeśli 1<=n<3, w innym wypadku 4) 
+16.	schoolsup - dodatkowe wsparcie edukacyjne (binarnie: tak lub nie) 
+17.	famsup - rodzinne wsparcie edukacyjne (binarnie: tak lub nie) 
+18.	paid - dodatkowe płatne klasy (Math or Portuguese) (binarnie: tak lub nie) 
+19.	activities - zajęcia dodatkowe (binarnie: tak lub nie) 
+20.	nursery - czy uczeń był w przedszkolu (binarnie: tak lub nie) 
+21.	higher - czy uczeń chcę się dalej uczyć (binarnie: tak lub nie) 
+22.	internet - dostęp do Internetu w domu (binarnie: tak lub nie) 
+23.	romantic - czy uczeń jest w związku z drugą osobą (binarnie: tak lub nie) 
+24.	famrel - jakoś więzi rodzinnych (numerycznie: od 1 - bardzo źle do 5 - świetnie) 
+25.	freetime - wolny czas po szkole (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+26.	goout - jak często wychodzi ze znajomymi (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+27.	Dalc - ile alkoholu wypija w czasie dnia pracy (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+28.	Walc - ile alkoholu wypija w weekendy (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+29.	health - obecny stan zdrowia (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+30.	absences - liczba nieobecności w szkole (numerycznie: from 0 to 93) 
+
+Oceny za semestry:
+1.	G1 - ocena za pierwszy semestr (numerycznie: od 0 do 20) 
+2.	G2 - ocena za drugi semestr (numerycznie: od 0 do 20) 
+3.	G3 - ostateczna ocena (numerycznie: od 0 do 20, cel wyjściowy) 
+
+
+
+## 2. Przygotowanie środowiska
+
+```{python}
+import numpy as np
+import pandas as pd
+pd.set_option('display.max_rows', 500)
+pd.set_option('display.max_columns', 500)
+pd.set_option('display.width', 1000)
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import NearestNeighbors
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import NearestCentroid
+from sklearn.naive_bayes import GaussianNB
+from sklearn import tree
+```
+
+## 3. Wczytanie danych
+
+```{python}
+df = pd.read_csv('student-mat.csv')
+```
+
+## 4. Podstawowe parametry danych
+
+```{python}
+l_obiektow = df.shape[0]
+l_atrybutow = df.columns.size
+
+print('Liczba obiektów: {}'.format(l_obiektow))
+print('Liczba atrybutów: {}\n'.format(l_atrybutow))
+```
+
+## 5. Przygotowanie danych
+
+```{python}
+l_brakow = df.isnull().sum().sum()
+
+print('Brakująca liczba danych: {}\n'.format(l_brakow))
+```
+
+Jak widać powyżej nie brakuje żadnych danych, więc nie musimy usuwać wierszy, ani kolumn. Przechodzimy więc do analizy danych.
+
+
+## 6. Miary pozycyjne poszczególnych danych
+
+```{python}
+df.describe()
+```
+
+Jak widać powyżej nie wszystkie dane zostały uwzględnione. Prawdopodobnie wynika to z tego, iż pozostałe dane nie posiadają wartości liczbowych. Sprawdźmy więc jakiego typu są nasze dane.
+
+```{python}
+df.info()
+```
+
+Niektóre atrybuty są typu obiekt, więc nie są uwzględnione powyżej. Atrybuty typu obiekt możemy zastąpić wartościami liczbowymi. Dzięki temu będziemy mogli przeprowadzić analizę na wszystkich danych.
+
+
+## 7. Przygotowanie danych do analizy atrybutów i zbadania korelacji
+
+
+By atrybuty typu obiekt zastąpić wartościami liczbowymi użyjemy mapowania. Ta prosta metoda pozwoli nam na dalszą analizę atrybutów. 
+
+```{python}
+df = pd.read_csv('student-mat.csv')
+
+school = {'GP': 0, 'MS': 1}
+df.school = df.school.map(school)
+
+sex = {'F': 0, 'M': 1}
+df.sex = df.sex.map(sex)
+
+address = {'R': 0, 'U': 1}
+df.address = df.address.map(address)
+
+famsize = {'LE3': 0, 'GT3': 1}
+df.famsize = df.famsize.map(famsize)
+
+Pstatus = {'A': 0, 'T': 1}
+df.Pstatus = df.Pstatus.map(Pstatus)
+
+Mjob = {'teacher': 0, 'health': 1, 'services': 2, 'at_home': 3, 'other': 4}
+df.Mjob = df.Mjob.map(Mjob)
+
+Fjob = {'teacher': 0, 'health': 1, 'services': 2, 'at_home': 3, 'other': 4}
+df.Fjob = df.Fjob.map(Fjob)
+
+guardian = {'mother': 0, 'father': 1, 'other': 2}
+df.guardian = df.guardian.map(guardian)
+
+schoolsup = {'no': 0, 'yes': 1}
+df.schoolsup = df.schoolsup.map(schoolsup)
+
+famsup = {'no': 0, 'yes': 1}
+df.famsup = df.famsup.map(famsup)
+
+paid = {'no': 0, 'yes': 1}
+df.paid = df.paid.map(paid)
+
+activities = {'no': 0, 'yes': 1}
+df.activities = df.activities.map(activities)
+
+nursery = {'no': 0, 'yes': 1}
+df.nursery = df.nursery.map(nursery)
+
+higher = {'no': 0, 'yes': 1}
+df.higher = df.higher.map(higher)
+
+internet = {'no': 0, 'yes': 1}
+df.internet = df.internet.map(internet)
+
+romantic = {'no': 0, 'yes': 1}
+df.romantic = df.romantic.map(romantic)
+```
+
+## 8. Miary pozycyjne z wykorzystaniem wszystkich atrybutów
+
+```{python}
+df.describe()
+```
+
+## 9. Wnioski z analizy atrybutów
+
+
+1. Zdecydowana większość uczniów pochodzi ze szkoły Gabriel Pereira.
+2. Wiekszość uczniów stanowią kobiety.
+3. Większość uczniów pochodzi z obszarów miejskich.
+4. Wiekszość uczniów ma niedaleko do szkoły. Prawodopodbnie wpływ na to ma skąd pochodzi uczeń. Logiczne jest to, że uczniowie pochodzący z obszarów miejskich będą miały bliżej.
+5. Większość uczniów pochodzi z rodzin wielodzietnych.
+6. Zazwyczaj za ucznia odpowiedzialna jest matka.
+7. Prawie połowa uczniów uczęszcza na korepetycję.
+8. Połowa uczniów uczęszcza na dodatkowe, pozaszkolne zajęcia.
+9. Zdecydowania większość (praktycznie wszyscy uczniowie) chce kontyunować naukę po szkole średniej.
+10. Uczniowie mają niemałą ilość czasu wolnego i również sporą część tego czasu przeznaczają na wyjście ze znajomymi.
+11. Dzienne spożycie alkholu nie jest tak duże, weekendowe wzrasta jednak nie jest to duże spożycie.
+12. Większość uczniów jest zdrowa.
+
+
+## 10. Analiza korelacji
+
+```{python}
+plt.figure(figsize=(29, 29), dpi = 100)
+sns.heatmap(df.corr(), annot = df.corr())
+```
+
+#### Analiza korelacji atrybutów z ocenami
+
+```{python}
+korelacjaAtrybutowZOcenami = df.corr().iloc[-3:, :-3]
+plt.figure(figsize=(29, 3), dpi = 70)
+sns.heatmap(korelacjaAtrybutowZOcenami, annot = korelacjaAtrybutowZOcenami)
+```
+
+#### Posortowana tabela z wpływem atrybutów na oceny
+
+```{python}
+posortowanaKorelacja = korelacjaAtrybutowZOcenami.mean().abs().sort_values(ascending=False)
+posortowanaKorelacja = pd.DataFrame(posortowanaKorelacja, columns=['Korelacja z ocenami'])
+posortowanaKorelacja
+```
+
+## 11. Wnioski z analizy korelacji atrybutów
+
+
+1. Największy wpływ na aktualną ocenę ucznia mają oceny z poprzednich lat. Jeśli uczeń uczył się dobrze to prawdopodobnie w przyszłości też się będzie dobrze uczył.
+2. Ogromny wpływa na ocenę ma również ilość niezaliczonych lat szkoły. Im więcej tym gorsze oceny dostaje uczeń i tym mniejsza chęć zdobycia wyższego wykształcenia. 
+3. Ciekawą korelacją jest wykształcenie rodziców. Małżonkowie zazwyczaj mają podobne wykształcenie.
+4. Wykształcenie matki jest 3 najważniejszym czynnikiem wpływającym na oceny ucznia.
+5. Wykształcenie ojca jest bardzo istotne, ale nie tak istotne jak chęć podjęcia dalszej eduakcji. Chęć podjęcia dalszej edukacji jest ważniejsza niż czas spędzony na nauce. Liczą się chęci.
+6. Płeć ma bardzo duży wpływ na czas wolny i czas nauki. Kobiety spędzają więcej czasu na nauce, a mężczyźni mają więcej czasu wolnego. Przełożenie na wyniki w nauce jest nieznaczne.
+7. Mężczyźni piją zdecydowanie więcej alkoholu w weekendy i w tygodniu. Spożycie alkoholu jest mocno skorelowane z wychodzeniem z domu, ale to wychodzenie z domu ma dużo silniejszą korelację ze słabszymi wynikami w nauce. 
+8. Weekendowe spożycie alkoholu jest silnie skorelowane z czasem poświęcanym na naukę. 
+9. Mało ważne jest to kto jest odpowiedzialny ze ucznia, jeżeli chodzi o przyszłe oceny. Widać jednak, że wiek ma znaczenie na to kto opiekuje się uczniem. Wraz ze wzrostem wieku opiekę przestają sprawować rodzice.
+10. Osoba odpowiedzialna ma wpływ na ilość niezaliczonych lat. W większości przypadków odpowiedzialna jest matka lub ktoś inny. Osoba nie ma zbyt dużo wpływu na ocenę w przyszłych latach, ale ilość niezaliczonych lat już tak.
+   
+
+
+## 12. Parametry znaczące
+
+
+Jako parametry znaczące wybraliśmy atrybuty, których korelacja jest większa niż 0.15 lub zbliżona do tej wartośći.
+
+```{python}
+atrybutyZnaczace = list(list(posortowanaKorelacja.index[:6]))
+
+print('Atrybuty znaczące:')
+for i, v in enumerate(atrybutyZnaczace):
+    print (v)
+```
+
+## 13. Korelacja pomiędzy atrybutami znaczącymi
+
+```{python}
+plt.figure(figsize=(6, 6), dpi = 150)
+sns.heatmap(df[atrybutyZnaczace].corr(), annot=df[atrybutyZnaczace].corr())
+```
+
+## 14. Wnioski z analizy korelacji atrybutów znaczących.
+
+
+1. Bardzo duży wpływ na siebie ma edukacja matki i edukacja ojca. Być może rodzice poznali się na uczelni lub połączyło ich zamiłowanie do danej dziedziny. 
+2. Edukacja rodziców ma niemały wpływ na chęć podjęcia dalszej edukacji przez uczniów. Widać, że jeżeli rodzice są dobrze wykształceni to ich dzieci również chcą takie być.
+3. Edukacja matki wpływa na jej pracę, co wydaję się być logiczne. Edukacja ojca również wpływa na jego obecną pracę lecz w mniejszym stopniu. Być może męzczyźni poszukują nowych wyzwań i są bardziej zmienni.
+
+
+## Wybór optymalnego klasyfikatora
+
+```{python}
+def podziel(df,proporcja):
+    # dzieli macierz (ramkę) danych na zbiór uczacy i testowy
+    # df - ramka danych; proporcja - proporcja podzialu (0-1)
+    # zwraca słownik z kluczami:
+    # opis_ucz/opis_test - macierz atrybutów opisujących zbioru uczącego/testowego
+    # dec_ucz/dec_test - wektor wartosci atrybutu decyzyjnego zbioru uczącego/testowego
+    # uwaga: atrybut opisujący jest zawsze na końcu (ostatnia kolumna ramki)
+    opis_ucz, opis_test, dec_ucz, dec_test = train_test_split(df.iloc[:,0:-1], df.iloc[:,-1].astype('category').cat.codes, test_size=proporcja)#, random_state=0)
+    return {"opis_ucz":opis_ucz, "opis_test":opis_test, "dec_ucz":dec_ucz, "dec_test":dec_test}
+
+
+
+
+def weryfikuj(model,dane,atryb):
+    # wyswietla wynik weryfikacji klasyfikatora w postaci macierzy pomyłek
+    # dla zbioru uczącego i testowego
+    # model - model klasyfikatora
+    # dane - dane (słownik zwracany przez funkcje podziel)
+    # atryb - lista atrybutów uwzględnianych w weryfikacji
+    model.fit(dane["opis_ucz"].iloc[:,atryb], dane["dec_ucz"])
+    wynik_ucz = model.predict(dane["opis_ucz"].iloc[:,atryb])
+    wynik_test = model.predict(dane["opis_test"].iloc[:,atryb])
+    print("Macierz pomyłek dla zbioru uczącego")
+    print(pd.crosstab(dane["dec_ucz"],wynik_ucz)) 
+    print("Macierz pomyłek dla zbioru testowego")
+    print(pd.crosstab(dane["dec_test"],wynik_test))
+
+    
+def granice(model,dane,atr_x, atr_y,tytul,kontur = 1):
+    # wyswietla granice decyzyjne
+    # model - model klasyfikatora
+    # dane - dane (słownik zwracany przez funkcje podziel)
+    # atr_x/atr_y - artybut wyswietlany na osi x/y
+    # tytul - wyswietlany tytul wykresu
+    # kontur - par. opcjonalny (=0 -> brak konturu)
+    if (kontur == 1):    
+        model.fit(dane["opis_ucz"].iloc[:,[atr_x,atr_y]], dane["dec_ucz"])
+        x_min = min(dane["opis_ucz"].iloc[:, atr_x].min(),dane["opis_test"].iloc[:, atr_x].min())
+        x_max = max(dane["opis_ucz"].iloc[:, atr_x].max(),dane["opis_test"].iloc[:, atr_x].max())
+        y_min = min(dane["opis_ucz"].iloc[:, atr_y].min(),dane["opis_test"].iloc[:, atr_y].min())
+        y_max = max(dane["opis_ucz"].iloc[:, atr_y].max(),dane["opis_test"].iloc[:, atr_y].max())
+        rozst_x = x_max - x_min
+        rozst_y = y_max - y_min
+        x_min = x_min - 0.1*rozst_x
+        x_max = x_max + 0.1*rozst_x
+        y_min = y_min - 0.1*rozst_y
+        y_max = y_max + 0.1*rozst_y       
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, (x_max-x_min)/150),
+                     np.arange(y_min, y_max, (y_max-y_min)/150))
+        Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+    plt.figure(dpi = 100)
+    plt.title(tytul)
+    if (kontur == 1):
+        plt.contourf(xx, yy, Z, levels = 4, alpha=0.2)
+    plt.scatter(dane["opis_ucz"].iloc[:, atr_x], dane["opis_ucz"].iloc[:, atr_y], c=dane["dec_ucz"], marker = '.')
+    plt.scatter(dane["opis_test"].iloc[:, atr_x], dane["opis_test"].iloc[:, atr_y], c=dane["dec_test"], marker = 'x')    
+    
+    
+dane = podziel(df,0.3)
+print('Liczba obiektów zbioru uczącego: ', len(dane["opis_ucz"]))
+print('Liczba obiektów zbioru testowego: ', len(dane["opis_test"]))
+```
+
+```{python}
+model = GaussianNB()
+```
+
+```{python}
+# podział zbioru danych
+d = podziel(df,0.3)
+# zdefiniowanie modelu klasyfikatora
+# weryfikacja
+weryfikuj(model,d,range(len(atrybutyZnaczace)))
+```
+
+```{python}
+#ax, ay = 0,1
+# granice decyzyjne
+#granice(model,d,ax,ay,"Klasyfikator Gaussa dla zbioru ")
+```
+
+```{python}
+#for k in [1,3,5,9]:
+    model_knn = KNeighborsClassifier(n_neighbors=k)
+    weryfikuj(model,d,range(len(atrybutyZnaczace)))
+```
+
+```{python}
+model = GaussianNB()
+weryfikuj(model,d,range(len(atrybutyZnaczace)))
+```
+
+```{python}
+model = NearestCentroid()
+weryfikuj(model,d,range(len(atrybutyZnaczace)))
+```
+
+```{python}
+model = tree.DecisionTreeClassifier(max_depth=4)
+weryfikuj(model,d,range(len(atrybutyZnaczace)))
+```
+
+```{python}
+
+```
