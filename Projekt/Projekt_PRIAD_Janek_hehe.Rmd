@@ -263,7 +263,7 @@ print('Liczba obiektów zbioru testowego: ', len(dane["opis_test"]))
 
 ```{python}
 # Model Klasyfikatora
-model = GaussianNB()
+model = KNeighborsClassifier(n_neighbors=1)
 ```
 
 ```{python}
@@ -314,11 +314,6 @@ def granice(model,dane,atr_x, atr_y,tytul,kontur = 1):
 ```
 
 ```{python}
-
- 
-#sns.pairplot(df, kind="scatter", hue = "G3")
-#plt.show()
-
 # podział zbioru danych
 d = podziel(df,0.3)
 # zdefiniowanie modelu klasyfikatora
@@ -330,6 +325,12 @@ weryfikuj(model,d,range(len(atrybutyZnaczace)))
 ax, ay = 0,1
 # granice decyzyjne
 granice(model,d,ax,ay,"Klasyfikator Gaussa dla zbioru ")
+```
+
+```{python}
+for k in [1,3,5,9]:
+    model_knn = KNeighborsClassifier(n_neighbors=k)
+    granice(model_knn,d,0,1,"klasyfikator " + str(k)+ "-NN dla zbioru ")
 ```
 
 ## Ocena klasyfikacji
