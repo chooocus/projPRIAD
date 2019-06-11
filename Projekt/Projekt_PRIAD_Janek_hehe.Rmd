@@ -329,7 +329,7 @@ weryfikuj(model,d,range(len(atrybutyZnaczace)))
 ```{python}
 ax, ay = 0,1
 # granice decyzyjne
-granice(model,d,ax,ay,"klasyfikator 1-NN dla zbioru ")
+granice(model,d,ax,ay,"Klasyfikator Gaussa dla zbioru ")
 ```
 
 ## Ocena klasyfikacji
