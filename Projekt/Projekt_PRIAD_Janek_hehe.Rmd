@@ -262,7 +262,8 @@ print('Liczba obiektów zbioru testowego: ', len(dane["opis_test"]))
 ```
 
 ```{python}
-model = KNeighborsClassifier(n_neighbors=1)
+# Model Klasyfikatora
+model = GaussianNB()
 ```
 
 ```{python}
@@ -278,23 +279,57 @@ def weryfikuj(model,dane,atryb):
     print("Macierz pomyłek dla zbioru uczącego")
     print(pd.crosstab(dane["dec_ucz"],wynik_ucz)) 
     print("Macierz pomyłek dla zbioru testowego")
-    print(pd.crosstab(dane["dec_test"],wynik_test)) 
+    print(pd.crosstab(dane["dec_test"],wynik_test))
+
+    
+def granice(model,dane,atr_x, atr_y,tytul,kontur = 1):
+    # wyswietla granice decyzyjne
+    # model - model klasyfikatora
+    # dane - dane (słownik zwracany przez funkcje podziel)
+    # atr_x/atr_y - artybut wyswietlany na osi x/y
+    # tytul - wyswietlany tytul wykresu
+    # kontur - par. opcjonalny (=0 -> brak konturu)
+    if (kontur == 1):    
+        model.fit(dane["opis_ucz"].iloc[:,[atr_x,atr_y]], dane["dec_ucz"])
+        x_min = min(dane["opis_ucz"].iloc[:, atr_x].min(),dane["opis_test"].iloc[:, atr_x].min())
+        x_max = max(dane["opis_ucz"].iloc[:, atr_x].max(),dane["opis_test"].iloc[:, atr_x].max())
+        y_min = min(dane["opis_ucz"].iloc[:, atr_y].min(),dane["opis_test"].iloc[:, atr_y].min())
+        y_max = max(dane["opis_ucz"].iloc[:, atr_y].max(),dane["opis_test"].iloc[:, atr_y].max())
+        rozst_x = x_max - x_min
+        rozst_y = y_max - y_min
+        x_min = x_min - 0.1*rozst_x
+        x_max = x_max + 0.1*rozst_x
+        y_min = y_min - 0.1*rozst_y
+        y_max = y_max + 0.1*rozst_y       
+        xx, yy = np.meshgrid(np.arange(x_min, x_max, (x_max-x_min)/150),
+                     np.arange(y_min, y_max, (y_max-y_min)/150))
+        Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
+        Z = Z.reshape(xx.shape)
+    plt.figure(dpi = 100)
+    plt.title(tytul)
+    if (kontur == 1):
+        plt.contourf(xx, yy, Z, levels = 4, alpha=0.2)
+    plt.scatter(dane["opis_ucz"].iloc[:, atr_x], dane["opis_ucz"].iloc[:, atr_y], c=dane["dec_ucz"], marker = '.')
+    plt.scatter(dane["opis_test"].iloc[:, atr_x], dane["opis_test"].iloc[:, atr_y], c=dane["dec_test"], marker = 'x')    
 ```
 
 ```{python}
-# wczytanie badanego zbioru danych
-df
-print(df.info())
-# 
-#sns.pairplot(df, kind="scatter", hue = "klasa")
+
+ 
+#sns.pairplot(df, kind="scatter", hue = "G3")
 #plt.show()
 
 # podział zbioru danych
 d = podziel(df,0.3)
 # zdefiniowanie modelu klasyfikatora
-model = KNeighborsClassifier(n_neighbors=1)
 # weryfikacja
-weryfikuj(model,d,[0,1])
+weryfikuj(model,d,range(len(atrybutyZnaczace)))
+```
+
+```{python}
+ax, ay = 0,1
+# granice decyzyjne
+granice(model,d,ax,ay,"klasyfikator 1-NN dla zbioru ")
 ```
 
 ## Ocena klasyfikacji
