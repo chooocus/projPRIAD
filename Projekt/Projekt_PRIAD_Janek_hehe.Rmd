@@ -281,6 +281,22 @@ def weryfikuj(model,dane,atryb):
     print(pd.crosstab(dane["dec_test"],wynik_test)) 
 ```
 
+```{python}
+# wczytanie badanego zbioru danych
+df
+print(df.info())
+# 
+#sns.pairplot(df, kind="scatter", hue = "klasa")
+#plt.show()
+
+# podział zbioru danych
+d = podziel(df,0.3)
+# zdefiniowanie modelu klasyfikatora
+model = KNeighborsClassifier(n_neighbors=1)
+# weryfikacja
+weryfikuj(model,d,[0,1])
+```
+
 ## Ocena klasyfikacji
 
 
