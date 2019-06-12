@@ -12,13 +12,62 @@ jupyter:
     name: python3
 ---
 
-# Rozpoznawanie ocen końcowych
+# Podstawy reprezentacji i analizy danych – projekt
+
+
+ #### Rozpoznawanie ocen końcowych na podstawie ankiet portugaliskich uczniów matematyki
+ Projekt realizowany w ramach laboratorium Podstawy reprezentacji i analizy danych. Wykonali:
+ - Jan Chabik
+ - Karol Wójciński
+
 
 
 ## 1. Opis problemu
 
 
-Dane zostały zebrane za pomocą przeprowadzonych ankiet rozwiązanych przez uczniów matematyki i języka portugalskiego w szkole średniej. Dane zawierają wiele interesujących socjalnych, płciowych i naukowych informacji na temat uczniów. Naszym zadaniem jest, wykorzystując wiedzę zdobytą na laboratoriach, by za pomocą tych danych przewidzieć końcową ocenę studentów. Korzystać będziemy z danych uzyskanych dzięki uczniom matematyki.
+Dane, które wykorzystujemy zostały zebrane za pomocą przeprowadzonych ankiet rozwiązanych przez uczniów matematyki i języka portugalskiego w szkole średniej. Dane zawierają wiele interesujących socjalnych, płciowych i naukowych informacji na temat uczniów. Końcowe oceny zostały już przewidziane. Naszym zadaniem jest, wykorzystując wiedzę zdobytą na laboratoriach, by za pomocą tych danych przeprowadzić badania eksploracyjne. Korzystać będziemy z danych uzyskanych dzięki uczniom matematyki.
+
+
+#### Opis danych
+
+
+Atrybuty dla zbioru danych student-mat.csv:
+1.	school - szkoła ucznia (binarnie: 'GP' - Gabriel Pereira lub 'MS' - Mousinho da Silveira)
+2.	sex - płeć ucznia (binarnie: 'F' - żeńska or 'M' - męska) 
+3.	age - wiek studenta (numerycznie: od 15 do 22) 
+4.	address - typ zamieszkania ucznia (binarnie: 'U' - miasto or 'R' - wieś) 
+5.	famsize - wielkość rodziny (binarnie: 'LE3' - less or equal to 3 or 'GT3' - greater than 3) 
+6.	Pstatus - stan współżycia rodziców (binarnie: 'T' - mieszkają razem or 'A' - oddzielnie)
+7.	Medu - edukacja matki (numerycznie: 0 - brak, 1 - podstawowa (4 klasa), 2 – 5 do 9 klasa, 3 – średnia or 4 – wyższa)
+8.	Fedu - edukacja ojca (numerycznie: 0 - brak, 1 - podstawowa (4 klasa), 2 – 5 do 9 klasa, 3 – średnia or 4 – wyższa)
+9.	Mjob - praca matki (symbolicznie: 'teacher' - nauczycielka, 'health' - dbanie o zdrowie, 'services' - cywilna służba (np. policja, sprawy administracyjne), 'at_home' - w domu lub 'other' - inne) 
+10.	Fjob - praca ojca (symbolicznie: 'teacher' - nauczyciel, 'health' - dbanie o zdrowie, 'services' - cywilna służba (np. policja, sprawy administracyjne), 'at_home' - w domu lub 'other' - inne) 
+11.	reason - dlaczego uczeń wybrał tę szkołę (symbolicznie: 'home' - blisko do domu, 'reputation' - reputacja szkoły, 'course' - preferencje lub 'other' - inne) 
+12.	guardian - opiekun ucznia (symbolicznie: 'mother'- matka, 'father' - ojciec or 'other' - ktoś inny) 
+13.	traveltime - czas podróży do szkoły (numerycznie: 1 - < 15 min., 2 - 15 do 30 min., 3 - 30 min. do 1 hour lubr 4 - >1 godzina) 
+14.	studytime - tygodniowy czas poświęcony na naukę (numerycznie: 1 - <2 godziny, 2 - 2 do 5 godzin, 3 - 5 do 10 godzin, or 4 - >10 godzin) 
+15.	failures - liczba poprzednich niezaliczonych klas (numerycznie: n, jeśli 1<=n<3, w innym wypadku 4) 
+16.	schoolsup - dodatkowe wsparcie edukacyjne (binarnie: tak lub nie) 
+17.	famsup - rodzinne wsparcie edukacyjne (binarnie: tak lub nie) 
+18.	paid - dodatkowe płatne klasy (Math or Portuguese) (binarnie: tak lub nie) 
+19.	activities - zajęcia dodatkowe (binarnie: tak lub nie) 
+20.	nursery - czy uczeń był w przedszkolu (binarnie: tak lub nie) 
+21.	higher - czy uczeń chcę się dalej uczyć (binarnie: tak lub nie) 
+22.	internet - dostęp do Internetu w domu (binarnie: tak lub nie) 
+23.	romantic - czy uczeń jest w związku z drugą osobą (binarnie: tak lub nie) 
+24.	famrel - jakoś więzi rodzinnych (numerycznie: od 1 - bardzo źle do 5 - świetnie) 
+25.	freetime - wolny czas po szkole (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+26.	goout - jak często wychodzi ze znajomymi (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+27.	Dalc - ile alkoholu wypija w czasie dnia pracy (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+28.	Walc - ile alkoholu wypija w weekendy (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+29.	health - obecny stan zdrowia (numerycznie: od 1 - bardzo mało do 5 - bardzo dużo) 
+30.	absences - liczba nieobecności w szkole (numerycznie: od 0 do 93) 
+
+Oceny za semestry:
+1.	G1 - ocena za pierwszy semestr (numerycznie: od 0 do 20) 
+2.	G2 - ocena za drugi semestr (numerycznie: od 0 do 20) 
+3.	G3 - ostateczna ocena (numerycznie: od 0 do 20, cel wyjściowy) 
+
 
 
 ## 2. Przygotowanie środowiska
@@ -32,7 +81,6 @@ pd.set_option('display.width', 1000)
 
 import seaborn as sns
 import matplotlib.pyplot as plt
-
 
 from sklearn.model_selection import train_test_split
 from sklearn.neighbors import NearestNeighbors
@@ -69,7 +117,7 @@ print('Brakująca liczba danych: {}\n'.format(l_brakow))
 Jak widać powyżej nie brakuje żadnych danych, więc nie musimy usuwać wierszy, ani kolumn. Przechodzimy więc do analizy danych.
 
 
-## 6. Zakres zmienności poszczególnych danych
+## 6. Miary pozycyjne poszczególnych danych
 
 ```{python}
 df.describe()
@@ -141,7 +189,7 @@ romantic = {'no': 0, 'yes': 1}
 df.romantic = df.romantic.map(romantic)
 ```
 
-## 8. Zakres zmienności z wykorzystaniem wszystkich atrybutów
+## 8. Miary pozycyjne z wykorzystaniem wszystkich atrybutów
 
 ```{python}
 df.describe()
@@ -160,29 +208,28 @@ df.describe()
 8. Połowa uczniów uczęszcza na dodatkowe, pozaszkolne zajęcia.
 9. Zdecydowania większość (praktycznie wszyscy uczniowie) chce kontyunować naukę po szkole średniej.
 10. Uczniowie mają niemałą ilość czasu wolnego i również sporą część tego czasu przeznaczają na wyjście ze znajomymi.
-11. Dzienne spożycie alkholu nie jest tak duże, weekendowe wzrasta jednak nie jest to duże spożycie.
+11. Dzienne spożycie alkholu nie jest tak duże, weekendowe wzrasta, jednak nie jest to duże spożycie.
 12. Większość uczniów jest zdrowa.
 
 
 ## 10. Analiza korelacji
 
 ```{python}
-plt.figure(figsize=(29, 29), dpi = 100)
+plt.figure(figsize=(29, 29), dpi = 150)
 sns.heatmap(df.corr(), annot = df.corr())
 ```
 
 #### Analiza korelacji atrybutów z ocenami
 
 ```{python}
-atrybutyZOcenami = df.corr().iloc[-3:, :-3]
 plt.figure(figsize=(29, 3), dpi = 70)
-sns.heatmap(atrybutyZOcenami, annot = atrybutyZOcenami)
+sns.heatmap(df.corr().iloc[-3:, :-3], annot = df.corr().iloc[-3:, :-3])
 ```
 
 #### Posortowana tabela z wpływem atrybutów na oceny
 
 ```{python}
-posortowanaKorelacja = atrybutyZOcenami.mean().abs().sort_values(ascending=False)
+posortowanaKorelacja = df.corr().iloc[-3:, :-3].mean().abs().sort_values(ascending=False)
 posortowanaKorelacja = pd.DataFrame(posortowanaKorelacja, columns=['Korelacja z ocenami'])
 posortowanaKorelacja
 ```
@@ -206,13 +253,13 @@ posortowanaKorelacja
 ## 12. Parametry znaczące
 
 
-Jako parametry znaczące wybraliśmy atrybuty, których korelacja jest większa niz 0.15 lub zbliżona do tej wartośći.
+Jako parametry znaczące wybraliśmy atrybuty, których korelacja jest większa niż 0.15 lub zbliżona do tej wartośći.
 
 ```{python}
-atrybutyZnaczace = list(list(posortowanaKorelacja.index[:6]))
+parametryZnaczace = list(list(posortowanaKorelacja.index[:6]))
 
-print('Atrybuty znaczące:')
-for i, v in enumerate(atrybutyZnaczace):
+print('Parametry znaczące:')
+for i, v in enumerate(parametryZnaczace):
     print (v)
 ```
 
@@ -220,7 +267,7 @@ for i, v in enumerate(atrybutyZnaczace):
 
 ```{python}
 plt.figure(figsize=(6, 6), dpi = 150)
-sns.heatmap(df[atrybutyZnaczace].corr(), annot=df[atrybutyZnaczace].corr())
+sns.heatmap(df[parametryZnaczace].corr(), annot=df[parametryZnaczace].corr())
 ```
 
 ## 14. Wnioski z analizy korelacji atrybutów znaczących.
@@ -231,18 +278,10 @@ sns.heatmap(df[atrybutyZnaczace].corr(), annot=df[atrybutyZnaczace].corr())
 3. Edukacja matki wpływa na jej pracę, co wydaję się być logiczne. Edukacja ojca również wpływa na jego obecną pracę lecz w mniejszym stopniu. Być może męzczyźni poszukują nowych wyzwań i są bardziej zmienni.
 
 
-## 15. Grupowanie atrybutów znaczących??????
-
-```{python}
-dfAtrZnaczacych = df[atrybutyZnaczace + [df.columns[-1]]]
-
-sns.pairplot(dfAtrZnaczacych, kind='scatter', hue = 'G3')
-```
-
-# NIE WIEM CO Z TYM DALEJ, TRZEBA TO OGARNĄĆ.
+## 15. Wybór optymalnego klasyfikatora
 
 
-## Wybór optymalnego klasyfikatora
+Skorzystaliśmy z funkcji pomocnicznych, które można znaleźć w materiałach na ISODzie w pliku $PRiAD 5 - Uczenie$ $nadzorowane.ipynb$
 
 ```{python}
 def podziel(df,proporcja):
@@ -255,18 +294,6 @@ def podziel(df,proporcja):
     opis_ucz, opis_test, dec_ucz, dec_test = train_test_split(df.iloc[:,0:-1], df.iloc[:,-1].astype('category').cat.codes, test_size=proporcja)#, random_state=0)
     return {"opis_ucz":opis_ucz, "opis_test":opis_test, "dec_ucz":dec_ucz, "dec_test":dec_test}
 
-
-dane = podziel(df,0.3)
-print('Liczba obiektów zbioru uczącego: ', len(dane["opis_ucz"]))
-print('Liczba obiektów zbioru testowego: ', len(dane["opis_test"]))
-```
-
-```{python}
-# Model Klasyfikatora
-model = KNeighborsClassifier(n_neighbors=1)
-```
-
-```{python}
 def weryfikuj(model,dane,atryb):
     # wyswietla wynik weryfikacji klasyfikatora w postaci macierzy pomyłek
     # dla zbioru uczącego i testowego
@@ -280,64 +307,58 @@ def weryfikuj(model,dane,atryb):
     print(pd.crosstab(dane["dec_ucz"],wynik_ucz)) 
     print("Macierz pomyłek dla zbioru testowego")
     print(pd.crosstab(dane["dec_test"],wynik_test))
-
     
-def granice(model,dane,atr_x, atr_y,tytul,kontur = 1):
-    # wyswietla granice decyzyjne
-    # model - model klasyfikatora
-    # dane - dane (słownik zwracany przez funkcje podziel)
-    # atr_x/atr_y - artybut wyswietlany na osi x/y
-    # tytul - wyswietlany tytul wykresu
-    # kontur - par. opcjonalny (=0 -> brak konturu)
-    if (kontur == 1):    
-        model.fit(dane["opis_ucz"].iloc[:,[atr_x,atr_y]], dane["dec_ucz"])
-        x_min = min(dane["opis_ucz"].iloc[:, atr_x].min(),dane["opis_test"].iloc[:, atr_x].min())
-        x_max = max(dane["opis_ucz"].iloc[:, atr_x].max(),dane["opis_test"].iloc[:, atr_x].max())
-        y_min = min(dane["opis_ucz"].iloc[:, atr_y].min(),dane["opis_test"].iloc[:, atr_y].min())
-        y_max = max(dane["opis_ucz"].iloc[:, atr_y].max(),dane["opis_test"].iloc[:, atr_y].max())
-        rozst_x = x_max - x_min
-        rozst_y = y_max - y_min
-        x_min = x_min - 0.1*rozst_x
-        x_max = x_max + 0.1*rozst_x
-        y_min = y_min - 0.1*rozst_y
-        y_max = y_max + 0.1*rozst_y       
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, (x_max-x_min)/150),
-                     np.arange(y_min, y_max, (y_max-y_min)/150))
-        Z = model.predict(np.c_[xx.ravel(), yy.ravel()])
-        Z = Z.reshape(xx.shape)
-    plt.figure(dpi = 100)
-    plt.title(tytul)
-    if (kontur == 1):
-        plt.contourf(xx, yy, Z, levels = 4, alpha=0.2)
-    plt.scatter(dane["opis_ucz"].iloc[:, atr_x], dane["opis_ucz"].iloc[:, atr_y], c=dane["dec_ucz"], marker = '.')
-    plt.scatter(dane["opis_test"].iloc[:, atr_x], dane["opis_test"].iloc[:, atr_y], c=dane["dec_test"], marker = 'x')    
+dane = podziel(df,0.3)
+print('Liczba obiektów zbioru uczącego: ', len(dane["opis_ucz"]))
+print('Liczba obiektów zbioru testowego: ', len(dane["opis_test"]))
 ```
 
 ```{python}
-# podział zbioru danych
-d = podziel(df,0.3)
-# zdefiniowanie modelu klasyfikatora
-# weryfikacja
-weryfikuj(model,d,range(len(atrybutyZnaczace)))
+atrybuty = [6, 7, 8, 13, 19, 24]
 ```
 
-```{python}
-ax, ay = 0,1
-# granice decyzyjne
-granice(model,d,ax,ay,"Klasyfikator Gaussa dla zbioru ")
-```
+### Klasyfikator $k$-najbliższych sąsiadów (k-NN)
 
 ```{python}
 for k in [1,3,5,9]:
-    model_knn = KNeighborsClassifier(n_neighbors=k)
-    granice(model_knn,d,0,1,"klasyfikator " + str(k)+ "-NN dla zbioru ")
+    d = podziel(df,0.3)
+    model = KNeighborsClassifier(n_neighbors=k)
+    weryfikuj(model,d, atrybuty)
 ```
 
-## Ocena klasyfikacji
-
-
-## Wnioski
+### Naiwny klasyfikator Bayesa
 
 ```{python}
-
+d = podziel(df,0.3)
+model = GaussianNB()
+weryfikuj(model,d,atrybuty)
 ```
+
+# Metoda najbliższych prototypów
+
+```{python}
+d = podziel(df,0.3)
+model = NearestCentroid()
+weryfikuj(model,d,atrybuty)
+```
+
+### Drzewa decyzyjne
+
+```{python}
+d = podziel(df,0.3)
+model = tree.DecisionTreeClassifier(max_depth=4)
+weryfikuj(model,d,atrybuty)
+```
+
+## 16. Ocena klasyfikacji
+
+
+Testowaliśmy różne klasyfikatory, aby zobaczyć, który najlepiej spełnił swoje zadanie. Na podstawie macierzy błędów uznaliśmy, iż klasyfikator najbliższych prototypów najbardziej pasuje do naszego zbioru danych.
+
+
+## 17. Wnioski
+
+
+Zbiór danych student-mat jest obszernym zbiorem danych, o wielu atrybutach. Jego analiza przy pomocy narzędzi analizy danych pozwala na zaobserwowanie ciekawych korelacji (np. wykształcenie matki jako trzeci najważniejszy czynnik).
+Mapy ciepła pozwalają sprawnie oddzielić atrybuty znaczące od reszty i na ich podstawie przeprowadzić dalszą analizę.
+Dobór klasyfikatora przeprowadziliśmy metodą prób i błędów, decydując który nam najbardziej odpowiada na podstawie macierzy pomyłek. Dla takiego zbioru można by również zastosować regresję, niestety nie znaleźliśmy potrzebnych materiałów w zasobach na $Isodzie$.
